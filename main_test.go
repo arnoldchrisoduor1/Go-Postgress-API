@@ -73,6 +73,37 @@ func TestGetNonExistentProduct(t *testing.T) {
 	}
 }
 
+// This test code will create a product.
+func TestCreateProduct(t *testing.T) {
+	clearTable()
+
+	var jsonStr = []byte(`{"name":"test product", "price":11.22}`)
+
+	// We manually add an item to the databse.
+	req, _ := http.NewRequest("POST", "/product", bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Accesssing the relevant endpoints to fetch the product.
+	response := executeRequest(req)
+	// Checking for status code 201 for resource created.
+	checkResponseCode(t, http.StatusCreated, response.Code)
+
+	var m map[string]interface{}
+	json.Unmarshal(response.Body.Bytes(),&m)
+
+	// Checking if the response contained a JSON object with contents identical to that of the payload.
+
+	if m["name"] != "test product" {
+		t.Errorf("Expected product price to be '11.22'. Got '%v'", m["price"])
+	}
+
+	// the id is converted to 1.0 because JSON unmarshaling coneverts numbers to floats,
+	// when the target is a map[string]interface{}
+	if m["id"] != 1.0 {
+		t.Errorf("Expected product ID to be '1'. Got '%v'", m["id"])
+	}
+}
+
 // Function to execute our request.
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
