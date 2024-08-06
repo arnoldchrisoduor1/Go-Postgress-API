@@ -6,6 +6,10 @@ import (
 	"os"
 	"log"
 	"github.com/arnoldchrisoduor1/Go-Postgress-API"
+	"net/http"
+	"net/http/httptest"
+	"encoding/json"
+	"bytes"
 )
 
 var a main.App
@@ -20,15 +24,68 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// This function checks if the function exists.
 func ensureTableExists() {
 	if _, err := a.DB.Exec(tableCreationQuery); err != nil {
 		log.Fatal(err)
 	}
 }
 
+// This function deletes everything from the table.
 func clearTable() {
 	a.DB.Exec("DELETE FROM products")
 	a.DB.Exec("ALTER SEQUENCE products_id_seq RESTART WITH 1")
+}
+
+
+// Testing the response to the /products endpoint with an empty table.
+func TestEmptyTable(t *testing.T) {
+	clearTable()	// deletes all records from the products table.
+
+	req, _:= http.NewRequest("GET", "/products", nil)
+	response := executeRequest(req)
+
+	// Now we test if the HTTP response is what we expect it to be
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+
+	// Checking the body of the response and test it is the textual representation of an empty array.
+	if body := response.Body.String(); body != "[]" {
+		t.Errorf("Expected an empty array. Got %s", body)
+	}
+}
+
+// Function to check for non-existent products.
+func TestGetNonExistentProduct(t *testing.T) {
+	clearTable()	// Ensuring the table is empty.
+
+	// Tries to access a non-existent product at an endpoint.
+	req, _ := http.NewRequest("GET", "/product/11", nil)
+	response := executeRequest(req)
+
+	// status code is 404, indicating the product was not found.
+	checkResponseCode(t, http.StatusNotFound, response.Code)
+
+	var m map[string]string
+	json.Unmarshal(response.Body.Bytes(), &m)
+	if m["error"] != "Product not found" {
+		t.Errorf("Expected the 'error' key of the response to be set to 'Product not found'. Got '%s'", m["error"])
+	}
+}
+
+// Function to execute our request.
+func executeRequest(req *http.Request) *httptest.ResponseRecorder {
+	rr := httptest.NewRecorder()
+	a.Router.ServeHTTP(rr, req)
+
+	return rr
+}
+
+// Implementing the checkResponseCode function.
+func checkResponseCode(t *testing.T, expected, actual int) {
+	if expected != actual {
+		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
+	}
 }
 
 const tableCreationQuery = `CREATE TABLE IF NOT EXISTS products
