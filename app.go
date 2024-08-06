@@ -3,8 +3,8 @@
 package main
 
 import (
-	"databse/sql"
-
+	"database/sql"
+	"log"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
@@ -14,6 +14,16 @@ type App struct {
 	DB     *sql.DB
 }
 
-func (a *App) Initialze(postgres, password, go_api string) { }
+func (a *App) Initialize() { 
+	connectionString :=
+		"host=localhost port=5432 user=postgres password=12345 dbname=go_api sslmode=disable"
+
+	var err error
+	a.DB, err = sql.Open("postgres", connectionString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	a.Router = mux.NewRouter()
+ }
 
 func (a *App) Run(addr string) { }
