@@ -6,37 +6,42 @@ import (
 
 // This struct will represent the product.
 type product struct {
-	ID int `json:"id"`
-	Name string `json:"name"`
-	Price float64 `json:"price"`
+	// We will specify how these fields should be encoded when working with json.
+	ID int `json:"id"`	// Integer field to represent the product ID.
+	Name string `json:"name"`	// String field to represent the product name.
+	Price float64 `json:"price"`	// Float string representing the product price.
 }
 
 // These functions will deal with a single product as methods on this struct.
-func (p *product) getProduct(db *sql.DB) error {
+func (p *product) getProduct(db *sql.DB) error { // Defining a method in the product struct
 	return db.QueryRow("SELECT name, price FROM products WHERE id=$1",
 		p.ID).Scan(&p.Name, &p.Price)
+		// Returns an error if the query or scan fails otherwise returns 'nil'
 }
 
+// Function to update a product in the database.
 func (p *product) updateProduct(db *sql.DB) error {
-	_, err := db.Exec("UPDATE products SET name=$1, price=$2 WHERE id=$3", 
-	p.Name, p.Price, p.ID)
+	_, err := db.Exec("UPDATE products SET name=$1, price=$2 WHERE id=$3",
+	p.Name, p.Price, p.ID) // Executes the query and assigns any error to `err`
 
-	return err
+	return err	// returns an error if any.
 }
 
+// Defines a method to delete a product from the databse.
 func (p *product) deleteProduct(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM products WHERE id=$1", p.ID)
+	_, err := db.Exec("DELETE FROM products WHERE id=$1", p.ID) // Executes the query ans assugns any error to 'err'.
 
-	return err
+	return err	// Returns the error.
 }
 
-func (p *product) createProduct(db *sql.DB) error {
-	err := db.QueryRow(
+// Defines a method to create a new product in th database.
+func (p *product) createProduct(db *sql.DB) error {		// 
+	err := db.QueryRow( 	// Executes the query and assign any error to `err`
 		"INSERT INTO products(name, price) VALUES($1, $2) RETURNING id",
 		p.Name, p.Price).Scan(&p.ID)
 
 	if err != nil {
-		return err
+		return err // Returns an error if the query or scan fails.
 	}
 
 	return nil
@@ -54,16 +59,16 @@ func getProducts(db *sql.DB, start ,count int) ([]product, error) {
 			return nil, err
 		}
 
-		defer rows.Close()
+		defer rows.Close() // Ensures tha the result set is closed when the function exists.
 
-		products := []product{}
+		products := []product{}	// Initializes an empty slice of `product` structs.
 
-		for rows.Next() {
+		for rows.Next() { // Iterating over each row in the result.
 			var p product
-			if err := rows.Scan(&p.ID, &p.Name, &p.Price); err != nil {
+			if err := rows.Scan(&p.ID, &p.Name, &p.Price); err != nil { // Scanning the current row into p.
 				return nil, err
 			}
-			products = append(products, p)
+			products = append(products, p) // Adds the products to the products slice.
 		}
 		return products, nil
 }
