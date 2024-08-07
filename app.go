@@ -88,7 +88,10 @@ func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
 
 // A handler to create a product.
 func (a *App) createProduct(w http.ResponseWriter, r *http.Request) {
+
 	var p product
+
+	// Assumes the request body is a json object containing the details of the product to be created.
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&p); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
@@ -101,6 +104,31 @@ func (a *App) createProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responseWithJSON(w, http.StatusCreated, p)
+}
+
+// A handler to update a product.
+func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid product ID")
+		return
+	}
+
+	var p product
+	decoder := json.NewDecoder(r.Body)\
+	if err := decoder.Decode(&p); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Request Payload")
+		return
+	}
+	defer r.Body.Clode()
+	p.Id = id
+
+	if err := p.updateProduct(a.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	responseWithJSON(w, http.StatusOK, p)
 }
 
 func (a *App) Run(addr string) { }
