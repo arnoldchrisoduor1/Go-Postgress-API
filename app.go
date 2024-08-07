@@ -27,14 +27,12 @@ func (a *App) Initialize() {
 		log.Fatal(err)
 	}
 	a.Router = mux.NewRouter()
+
+	a.InitializeRoutes()
 }
 
-func (a *App) InitializeRoutes() {
-	a.Router.HandleFunc("/products", a.getProducts).Methods("GET")
-	a.Router.HandleFunc("/product", a.createProduct).Methods("POST")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", a.getProduct).Methods("GET")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", a.updateProduct).Methods("PUT")
-	a.Router.HandleFunc("/product/{id:[0-9]+}", a.deleteProduct).Methods("DELETE")
+func (a *App) Run(addr string) {
+	log.Fatal(http.ListenAndServe(":8010", a.Router))
 }
 
 // Creating a handler for the route that fetches a single product.
@@ -155,4 +153,10 @@ func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {
 	responseWithJSON(w, http.StatusOK, map[string]string{"result":"success"})
 }
 
-func (a *App) Run(addr string) { }
+func (a *App) InitializeRoutes() {
+	a.Router.HandleFunc("/products", a.getProducts).Methods("GET")
+	a.Router.HandleFunc("/product", a.createProduct).Methods("POST")
+	a.Router.HandleFunc("/product/{id:[0-9]+}", a.getProduct).Methods("GET")
+	a.Router.HandleFunc("/product/{id:[0-9]+}", a.updateProduct).Methods("PUT")
+	a.Router.HandleFunc("/product/{id:[0-9]+}", a.deleteProduct).Methods("DELETE")
+}
