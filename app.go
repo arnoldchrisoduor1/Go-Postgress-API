@@ -116,19 +116,35 @@ func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var p product
-	decoder := json.NewDecoder(r.Body)\
+	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&p); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid Request Payload")
 		return
 	}
-	defer r.Body.Clode()
-	p.Id = id
+	defer r.Body.Close()
+	p.ID = id
 
 	if err := p.updateProduct(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	responseWithJSON(w, http.StatusOK, p)
+}
+
+// A handler to delete a product from the database.
+func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid product ID")
+		return
+	}
+	p := product{ID: id}
+	if err := p.deleteProduct(a.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	responseWithJSON(w, http.StatusOK, map[string]string{"result":"success"})
 }
 
 func (a *App) Run(addr string) { }
