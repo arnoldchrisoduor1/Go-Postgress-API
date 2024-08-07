@@ -128,6 +128,66 @@ func addProducts(count int) {
 	}
 }
 
+// Function to test the update of a product.
+func TestUpdateProduct(t *testing.T) {
+
+	clearTable()
+	addProducts(1)
+
+	req, _ := http.NewRequest("GET", "/product/1", nil)
+	response := executeRequest(req)
+	var originalProduct map[string]interface{}
+	json.Unmarshal(response.Body.Bytes(), &originalProduct)
+
+	var jsonStr = []byte(`{"name": "test product - updated name", "price": 11.22}`)
+	req,  _ = http.NewRequest("PUT", "/product/1", bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
+
+	response = executeRequest(req)
+
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+	var m map[string]interface{}
+	json.Unmarshal(response.Body.Bytes(), &m)
+
+	// Checking if the response id matches the original id.
+	if m["id"] != originalProduct["id"] {
+		t.Errorf("Expected the id to remain the same (%v). Got %v", originalProduct["id"], m["id"])
+	}
+
+	// Checking if the response name matches the original name.
+	if m["name"] == originalProduct["name"] {
+		t.Errorf("Expected the name to change from '%v' to '%v'. Got '%v'", originalProduct["name"], m["name"], m["name"])
+	}
+
+	// Checking if the response price matches the original price.
+	if m["price"] == originalProduct["price"] {
+		t.Errorf("Expected the price to change from '%v' to '%v'. Got '%v'", originalProduct["price"], m["price"], m["price"])
+	}
+}
+
+// Implementing the test to delete a product.
+func TestDeleteProduct(t *testing.T) {
+
+	clearTable()
+	addProducts(1)
+
+	// Checking if the added product exists.
+	req, _ := http.NewRequest("GET", "/product/1", nil)
+	response := executeRequest(req)
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+	// Deleting the product from the database.
+	req, _ = http.NewRequest("DELETE", "/product/1", nil)
+    response = executeRequest(req)
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+	// Accessing the product at the endpoint to check that it does not exist.
+	req, _ = http.NewRequest("GET", "/product/1", nil)
+	response = executeRequest(req)
+	checkResponseCode(t, http.StatusNotFound, response.Code)
+}
+
 // Function to execute our request.
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
