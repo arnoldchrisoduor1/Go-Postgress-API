@@ -70,9 +70,11 @@ func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
 	start, _ := strconv.Atoi(r.FormValue("start"))
 
 	if count > 10 || count  < 1 {
+		// Default for count is 10
 		count = 10
 	}
 	if start < 0 {
+		// Deafult for start is o
 		start = 0
 	}
 
@@ -82,6 +84,23 @@ func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responseWithJSON(w, http.StatusOK, products)
+}
+
+// A handler to create a product.
+func (a *App) createProduct(w http.ResponseWriter, r *http.Request) {
+	var p product
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&p); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	defer r.Body.Close()
+
+	if err := p.createProduct(a.DB); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	responseWithJSON(w, http.StatusCreated, p)
 }
 
 func (a *App) Run(addr string) { }
